@@ -1,40 +1,34 @@
-# Daily ERP & Middleware Brief — $0 Starter
+# Daily ERP & Middleware Brief — $0 Starter (Enhanced)
 
-This repo pulls the last 24h of ERP/middleware news from RSS + (optional) GDELT,
-summarizes each item (OpenAI), renders an HTML newsletter, emails it via Brevo (free 300/day),
-and publishes an HTML archive to `out/` (serve with GitHub Pages).
+Automates a daily newsletter:
+- Pulls last 24h from a wide RSS list (+ optional GDELT)
+- Dedupe, rank (vendor news > top tech press > blogs)
+- AI summaries (optional) or fallback summaries
+- Renders a polished HTML email (dark mode, preheader, view-in-browser)
+- Sends via Brevo (free 300/day) and publishes an HTML archive in `out/`
 
-## 1) One-time setup
-- Push this folder to your GitHub account.
-- In **Settings → Secrets and variables → Actions**, add:
-  - `OPENAI_API_KEY`
-  - `BREVO_API_KEY`
-  - `SENDER_EMAIL` (your verified Brevo sender email)
-  - `RECIPIENTS` (comma-separated emails for now; switch to lists later)
-- (Optional) edit `sources.yml` to add/remove feeds and GDELT queries.
-- Turn on **Pages** (deploy from `main` root) if you want a public archive.
+## Setup
+1. Push these files to your GitHub repo (main branch).
+2. Add **Secrets** (Settings → Secrets and variables → Actions):
+   - `BREVO_API_KEY`
+   - `SENDER_EMAIL` (verified in Brevo)
+   - `RECIPIENTS` (comma-separated for transactional mode)
+   - Optional: `OPENAI_API_KEY`
+   - Optional (for campaign mode): `BREVO_LIST_ID`
+3. (Optional) **Variables** (Settings → Variables):
+   - `SEND_MODE` = `transactional` or `campaign` (defaults to transactional)
+   - `VIEW_URL_BASE` = Your GitHub Pages base URL (e.g. `https://you.github.io/repo/`)
 
-## 2) Run it
-- It runs daily at 07:15 ET via cron.
-- You can also run manually: **Actions → Daily Newsletter → Run workflow**.
+## Run it
+- Actions → **Daily Newsletter** → **Run workflow**.
+- It also runs daily at **7:15am ET**.
 
-## 3) Local test
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-export OPENAI_API_KEY=sk-...
-export BREVO_API_KEY=...
-export SENDER_EMAIL=you@domain.com
-export RECIPIENTS=you@domain.com
-python pipeline.py
-```
+## Customize
+- Edit `sources.yml` to add/remove feeds.
+- `KEYWORD_FILTER` is off by default (include everything in last 24h). Set `KEYWORD_FILTER=on` as a variable to enable keyword gating.
+- Change the footer unsubscribe link in `pipeline.py`.
+- To publish a public archive, enable **Settings → Pages** (Deploy from branch: main, root). The workflow also writes `out/index.html`.
 
-## 4) Customize
-- Change keywords in `pipeline.py` (regex `kws`) or adjust scoring in `rank()`.
-- Edit the email template in `email.html.j2` (simple, mobile-friendly).
-- Set `MAX_ITEMS` env var (10–20 recommended).
-
-## 5) Deliverability
-- Authenticate your domain in Brevo (SPF, DKIM; add DMARC p=none to start).
-- Add a real unsubscribe URL and honor removals promptly.
-- Keep complaints low; seed-test with internal addresses first.
+## Deliverability
+- In Brevo, authenticate your domain (SPF/DKIM) and add DMARC `p=none` to start.
+- Keep List-Unsubscribe links (already present) and honor removals.
