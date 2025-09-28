@@ -1,86 +1,86 @@
 rss_feeds:
-  # ——— ERP vendors ———
-  - https://news.sap.com/feed/
-  - https://blogs.sap.com/feed/
-  - https://www.oracle.com/news/rss/
-  - https://blogs.oracle.com/feed.xml
-  - https://cloudblogs.microsoft.com/dynamics365/feed/
-  - https://cloudblogs.microsoft.com/industry-blog/en-us/manufacturing/feed/
-  - https://ifstech.io/feed/
-  - https://www.infor.com/blog/rss.xml
-  - https://www.epicor.com/en/blog/rss/
-  - https://www.unit4.com/blog/rss.xml
-  - https://www.sage.com/en-us/blog/feed/
+  # ERP vendors
+  - "https://news.sap.com/feed/"
+  - "https://blogs.sap.com/feed/"
+  - "https://www.oracle.com/news/rss/"
+  - "https://blogs.oracle.com/feed.xml"
+  - "https://cloudblogs.microsoft.com/dynamics365/feed/"
+  - "https://cloudblogs.microsoft.com/industry-blog/en-us/manufacturing/feed/"
+  - "https://ifstech.io/feed/"
+  - "https://www.infor.com/blog/rss.xml"
+  - "https://www.epicor.com/en/blog/rss/"
+  - "https://www.unit4.com/blog/rss.xml"
+  - "https://www.sage.com/en-us/blog/feed/"
 
-  # ——— Integration / iPaaS / EDI ———
-  - https://www.mulesoft.com/blog/all/feed/
-  - https://boomi.com/feed/
-  - https://www.workato.com/the-connector/feed/
-  - https://www.snaplogic.com/blog/feed
-  - https://www.celigo.com/blog/feed/
-  - https://tray.io/blog/rss.xml
-  - https://www.seeburger.com/blog/feed/
-  - https://www.axway.com/en/blog/feed
-  - https://www.ibm.com/blogs/integration/feed/
-  - https://blogs.opentext.com/feed/
+  # Integration / iPaaS / EDI
+  - "https://www.mulesoft.com/blog/all/feed/"
+  - "https://boomi.com/feed/"
+  - "https://www.workato.com/the-connector/feed/"
+  - "https://www.snaplogic.com/blog/feed"
+  - "https://www.celigo.com/blog/feed/"
+  - "https://tray.io/blog/rss.xml"
+  - "https://www.seeburger.com/blog/feed/"
+  - "https://www.axway.com/en/blog/feed"
+  - "https://www.ibm.com/blogs/integration/feed/"
+  - "https://blogs.opentext.com/feed/"
 
-  # ——— Middleware / Data / Event streaming ———
-  - https://www.confluent.io/blog/feed/
-  - https://redhat.com/sysadmin/rss.xml
-  - https://www.hashicorp.com/blog/feed.xml
-  - https://www.databricks.com/blog/feed
-  - https://www.snowflake.com/blog/feed/
-  - https://www.postgresql.org/news.rss
-  - https://www.mongodb.com/blog/rss
-  - https://kafka.apache.org/blogs/rss.xml
+  # Middleware / Data / Event streaming
+  - "https://www.confluent.io/blog/feed/"
+  - "https://redhat.com/sysadmin/rss.xml"
+  - "https://www.hashicorp.com/blog/feed.xml"
+  - "https://www.databricks.com/blog/feed"
+  - "https://www.snowflake.com/blog/feed/"
+  - "https://www.postgresql.org/news.rss"
+  - "https://www.mongodb.com/blog/rss"
+  - "https://kafka.apache.org/blogs/rss.xml"
 
-  # ——— Cloud (release notes & big updates) ———
-  - https://aws.amazon.com/blogs/aws/feed/
-  - https://azurecomcdn.azureedge.net/en-us/updates/feed/
-  - https://cloud.google.com/blog/rss
+  # Cloud (release notes & big updates)
+  - "https://aws.amazon.com/blogs/aws/feed/"
+  - "https://azurecomcdn.azureedge.net/en-us/updates/feed/"
+  - "https://cloud.google.com/blog/rss"
 
-  # ——— Security advisories ———
-  - https://msrc-blog.microsoft.com/feed/
-  - https://www.oracle.com/security-alerts/alerts.xml
-  - https://status.cloud.google.com/en/feed.atom
-  - https://aws.amazon.com/security/rss/
-  - https://www.cisa.gov/news.xml
+  # Security advisories
+  - "https://msrc-blog.microsoft.com/feed/"
+  - "https://www.oracle.com/security-alerts/alerts.xml"
+  - "https://status.cloud.google.com/en/feed.atom"
+  - "https://aws.amazon.com/security/rss/"
+  - "https://www.cisa.gov/news.xml"
 
-  # ——— Enterprise IT news / analysis ———
-  - https://www.theregister.com/software/enterprise/headlines.atom
-  - https://www.infoworld.com/index.rss
-  - https://www.cio.com/index.rss
-  - https://www.zdnet.com/topic/enterprise-tech/rss.xml
-  - https://www.techrepublic.com/rssfeeds/articles/
-  - https://www.gartner.com/en/newsroom/rss
-  - https://blogs.idc.com/feed/
+  # Enterprise IT news / analysis
+  - "https://www.theregister.com/software/enterprise/headlines.atom"
+  - "https://www.infoworld.com/index.rss"
+  - "https://www.cio.com/index.rss"
+  - "https://www.zdnet.com/topic/enterprise-tech/rss.xml"
+  - "https://www.techrepublic.com/rssfeeds/articles/"
+  - "https://www.gartner.com/en/newsroom/rss"
+  - "https://blogs.idc.com/feed/"
 
-  # ——— Supply chain / manufacturing tech ———
-  - https://www.supplychaindive.com/feeds/news/
-  - https://www.sdcexec.com/rss
-  - https://www.industryweek.com/technology-and-iiot/rss
-  - https://www.manufacturing.net/feeds/all
+  # Supply chain / manufacturing tech
+  - "https://www.supplychaindive.com/feeds/news/"
+  - "https://www.sdcexec.com/rss"
+  - "https://www.industryweek.com/technology-and-iiot/rss"
+  - "https://www.manufacturing.net/feeds/all"
 
-  # ——— Microsoft Power Platform ———
-  - https://powerautomate.microsoft.com/en-us/blog/feed/
-  - https://powerapps.microsoft.com/en-us/blog/feed/
+  # Microsoft Power Platform
+  - "https://powerautomate.microsoft.com/en-us/blog/feed/"
+  - "https://powerapps.microsoft.com/en-us/blog/feed/"
 
-  # ——— Platform changelogs / releases ———
-  - https://github.blog/changelog/feed/
-  - https://about.gitlab.com/atom.xml
-  - https://kubernetes.io/feed.xml
+  # Platform changelogs / releases
+  - "https://github.blog/changelog/feed/"
+  - "https://about.gitlab.com/atom.xml"
+  - "https://kubernetes.io/feed.xml"
 
-  # ——— Google News (topic feeds) ———
-  - https://news.google.com/rss/search?q=SAP+BTP
-  - https://news.google.com/rss/search?q=Oracle+Fusion
-  - https://news.google.com/rss/search?q=Dynamics+365+integration
-  - https://news.google.com/rss/search?q=middleware+integration+iPaaS
-  - https://news.google.com/rss/search?q=EDI+integration
-  - https://news.google.com/rss/search?q=%22supply+chain%22+ERP
+  # Google News (topic feeds)
+  - "https://news.google.com/rss/search?q=SAP+BTP"
+  - "https://news.google.com/rss/search?q=Oracle+Fusion"
+  - "https://news.google.com/rss/search?q=Dynamics+365+integration"
+  - "https://news.google.com/rss/search?q=middleware+integration+iPaaS"
+  - "https://news.google.com/rss/search?q=EDI+integration"
+  - "https://news.google.com/rss/search?q=%22supply+chain%22+ERP"
 
 gdelt_queries:
-  - SAP OR "S/4HANA" OR "SAP BTP"
-  - Oracle OR "Fusion Applications" OR "E-Business Suite"
-  - "Dynamics 365" OR "Power Platform"
-  - middleware OR iPaaS OR EDI OR "application integration"
-  - "supply chain" AND (platform OR ERP OR integration)
+  - 'SAP OR "S/4HANA" OR "SAP BTP"'
+  - 'Oracle OR "Fusion Applications" OR "E-Business Suite"'
+  - '"Dynamics 365" OR "Power Platform"'
+  - 'middleware OR iPaaS OR EDI OR "application integration"'
+  - '"supply chain" AND (platform OR ERP OR integration)'
