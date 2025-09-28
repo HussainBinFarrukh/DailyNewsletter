@@ -15,6 +15,9 @@ jobs:
       - name: Check out
         uses: actions/checkout@v4
 
+      - name: Show repo tree (debug)
+        run: ls -la
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -25,22 +28,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run pipeline
+      - name: Run pipeline (debug on)
         env:
+          # --- Optional: set if you have an OpenAI key ---
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: gpt-4o-mini
+
+          # --- Required for sending (transactional mode) ---
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
           SENDER_NAME: "Daily ERP Brief"
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
           RECIPIENTS: ${{ secrets.RECIPIENTS }}
+
+          # --- App settings ---
           TIMEZONE: America/New_York
-          # switch to 'campaign' if you want to send to a Brevo list via Campaigns API
-          SEND_MODE: ${{ vars.SEND_MODE || 'transactional' }}
-          BREVO_LIST_ID: ${{ secrets.BREVO_LIST_ID }}
-          # set this to your GitHub Pages base URL (e.g. https://you.github.io/repo/)
-          VIEW_URL_BASE: ${{ vars.VIEW_URL_BASE || '' }}
-          MIN_ITEMS_TO_SEND: 1
+          SEND_MODE: transactional         # keep as-is (you didn't set a Brevo list)
+          MIN_ITEMS_TO_SEND: 1             # skip send if 0 items
+          # VIEW_URL_BASE not required; pipeline has a safe default
         run: |
+          set -x
+          python -V
           python pipeline.py
 
       - name: Commit & publish archive
@@ -49,12 +56,13 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
           mkdir -p out
-          # Make latest issue the index for "View in browser"
           TODAY=$(date -u +"%Y-%m-%d")
+          # Make today's issue the landing page for "View in browser"
           if [ -f "out/${TODAY}.html" ]; then
-            cp "out/${TODAY}.html" "out/index.html"
+            cp "out/${TODAY}.html" "out/index.html" || true
           fi
-          if git status --porcelain | grep -q "out/"; then
+          # Only commit when /out changed
+          if git status --porcelain | grep -q " out/"; then
             git add out/*.html || true
             git commit -m "Auto: publish daily issue"
             git push
