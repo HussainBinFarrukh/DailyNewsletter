@@ -1,7 +1,7 @@
 name: Daily Newsletter
 on:
   schedule:
-    - cron: "15 11 * * *"   # 07:15 America/New_York (11:15 UTC)
+    - cron: "0 13 * * *"   # 07:15 America/New_York (11:15 UTC)
   workflow_dispatch:
 
 permissions:
