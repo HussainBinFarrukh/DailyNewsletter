@@ -4,54 +4,101 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>{{ subject }}</title>
+  <!-- Preheader (hidden in body preview) -->
+  <meta name="x-preheader" content="{{ preheader }}">
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;margin:0;background:#f7f7fb;color:#111}
-    .wrap{max-width:720px;margin:0 auto;padding:24px}
-    .card{background:#fff;border-radius:14px;padding:20px;margin:16px 0;border:1px solid #eee}
-    h1{font-size:24px;margin:8px 0 0}
-    h2{font-size:18px;margin:0 0 12px}
-    .item-title{font-weight:600;font-size:16px;margin:0 0 6px}
-    .why{margin:8px 0 0;font-size:14px}
-    .meta{color:#666;font-size:12px;margin:0 0 6px}
-    a{color:#0b5fff;text-decoration:none}
-    .footer{color:#666;font-size:12px;text-align:center;margin-top:24px}
-    .badge{display:inline-block;background:#eef3ff;color:#2141ff;border-radius:999px;padding:2px 8px;font-size:11px;margin-right:6px}
-    .section{margin-top:24px}
-    .li{margin:12px 0}
+    :root {
+      color-scheme: light dark;
+    }
+    body{
+      margin:0;
+      -webkit-text-size-adjust:100%;
+      background:#f6f7fb;
+      color:#111;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Helvetica, Arial, sans-serif;
+      line-height:1.45;
+    }
+    .preheader{ display:none !important; visibility:hidden; opacity:0; height:0; overflow:hidden; }
+    .wrap{ max-width:760px; margin:0 auto; padding:24px; }
+    .card{ background:#fff; border:1px solid #e9e9ef; border-radius:14px; padding:20px; margin:16px 0; }
+    h1{ font-size:24px; margin:6px 0 8px; }
+    h2{ font-size:18px; margin:0 0 12px; }
+    .meta{ color:#666; font-size:12px; margin:0 0 12px; }
+    .item{ margin:16px 0; }
+    .item-title{ font-weight:700; font-size:16px; margin:0 0 6px; }
+    .why{ margin:8px 0 0; font-size:14px; }
+    .toc a{ text-decoration:none; display:inline-block; margin-right:10px; font-size:13px; }
+    a{ color:#0b5fff; }
+    .btn{
+      display:inline-block; background:#0b5fff; color:#fff !important; text-decoration:none;
+      border-radius:10px; padding:10px 14px; font-weight:600; font-size:14px;
+    }
+    .section-title{ display:flex; align-items:center; gap:8px; }
+    .badge{ background:#eef3ff; color:#2141ff; border-radius:999px; padding:2px 10px; font-size:11px; }
+    .footer{ color:#666; font-size:12px; text-align:center; margin-top:24px; }
+    hr.div{ border:0; border-top:1px solid #eee; margin:12px 0; }
+
+    @media (prefers-color-scheme: dark) {
+      body{ background:#0e1116; color:#e7e9ee; }
+      .card{ background:#121621; border-color:#212536; }
+      .meta{ color:#9aa3b2; }
+      .badge{ background:#1a2440; color:#bcd2ff; }
+      a{ color:#6ba4ff; }
+    }
   </style>
 </head>
 <body>
+  <div class="preheader">{{ preheader }}</div>
   <div class="wrap">
     <div class="card">
-      <h1>Daily ERP & Middleware Brief</h1>
-      <p class="meta">{{ date_str }}</p>
-      <p>Here are {{ items|length }} things worth your time today.</p>
+      <table role="presentation" width="100%">
+        <tr>
+          <td>
+            <h1>Daily ERP & Middleware Brief</h1>
+            <p class="meta">{{ date_str }} • {{ items|length }} stories</p>
+          </td>
+          <td style="text-align:right; vertical-align:top;">
+            <a class="btn" href="{{ view_url }}" target="_blank" rel="noopener">View in browser</a>
+          </td>
+        </tr>
+      </table>
+      {% if top %}
+      <p class="toc">
+        <span class="badge">Jump to</span>
+        <a href="#top5">Top 5</a>
+        {% if rest %}<a href="#also">Also noteworthy</a>{% endif %}
+      </p>
+      {% endif %}
     </div>
 
     {% if top %}
-    <div class="card section">
-      <h2>Top 5</h2>
+    <div id="top5" class="card">
+      <div class="section-title"><h2>Top 5</h2><span class="badge">Editor’s picks</span></div>
+      <hr class="div"/>
       {% for it in top %}
-      <div class="li">
-        <div class="item-title"><a href="{{ it.url }}">{{ it.title }}</a></div>
-        <div class="meta">{{ it.source }} · {{ it.published_human }}</div>
-        <div>{{ it.summary }}</div>
-        {% if it.why %}<div class="why">• <strong>Why it matters:</strong> {{ it.why }}</div>{% endif %}
-      </div>
+        <div class="item">
+          <div class="item-title"><a href="{{ it.url }}">{{ it.title }}</a></div>
+          <div class="meta">{{ it.source }} · {{ it.published_human }}</div>
+          <div>{{ it.summary }}</div>
+          {% if it.why %}<div class="why">• <strong>Why it matters:</strong> {{ it.why }}</div>{% endif %}
+        </div>
+        {% if not loop.last %}<hr class="div"/>{% endif %}
       {% endfor %}
     </div>
     {% endif %}
 
     {% if rest %}
-    <div class="card section">
-      <h2>Also noteworthy</h2>
+    <div id="also" class="card">
+      <div class="section-title"><h2>Also noteworthy</h2><span class="badge">Everything else (last 24h)</span></div>
+      <hr class="div"/>
       {% for it in rest %}
-      <div class="li">
-        <div class="item-title"><a href="{{ it.url }}">{{ it.title }}</a></div>
-        <div class="meta">{{ it.source }} · {{ it.published_human }}</div>
-        <div>{{ it.summary }}</div>
-        {% if it.why %}<div class="why">• <strong>Why it matters:</strong> {{ it.why }}</div>{% endif %}
-      </div>
+        <div class="item">
+          <div class="item-title"><a href="{{ it.url }}">{{ it.title }}</a></div>
+          <div class="meta">{{ it.source }} · {{ it.published_human }}</div>
+          <div>{{ it.summary }}</div>
+          {% if it.why %}<div class="why">• <strong>Why it matters:</strong> {{ it.why }}</div>{% endif %}
+        </div>
+        {% if not loop.last %}<hr class="div"/>{% endif %}
       {% endfor %}
     </div>
     {% endif %}
