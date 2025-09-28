@@ -1,5 +1,4 @@
-
-import os, time, json, math, hashlib, html, re
+import os, time, json, html, re
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 import yaml, feedparser, requests
@@ -9,13 +8,19 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 # ---- Config via env ----
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 SENDER_NAME = os.getenv("SENDER_NAME", "Daily ERP Brief")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL", "no-reply@example.com")
 RECIPIENTS = [e.strip() for e in os.getenv("RECIPIENTS", "").split(",") if e.strip()]
+
 TIMEZONE = os.getenv("TIMEZONE", "America/New_York")
-MAX_ITEMS = int(os.getenv("MAX_ITEMS", "15"))
-MIN_TOP = min(5, MAX_ITEMS)
+SEND_MODE = os.getenv("SEND_MODE", "transactional")  # "transactional" or "campaign"
+BREVO_LIST_ID = os.getenv("BREVO_LIST_ID")  # required if SEND_MODE="campaign"
+
+# Behavior toggles
+KEYWORD_FILTER = os.getenv("KEYWORD_FILTER", "off").lower() == "on"  # default OFF per your request
+MIN_ITEMS_TO_SEND = int(os.getenv("MIN_ITEMS_TO_SEND", "1"))  # skip sending if fewer than this
 
 ROOT = os.path.dirname(__file__)
 
@@ -83,13 +88,13 @@ def within_last_24h(dt):
     return (datetime.now(timezone.utc) - dt) <= timedelta(hours=24)
 
 def rank(items):
-    # Simple scoring: vendor newsroom > big tech press > blogs, plus recency
+    # Simple scoring: vendor newsroom > big tech press > blogs, plus recency & signals
     def score(it):
         src = (it.get("source") or "").lower()
         s = 0
-        if any(x in src for x in ["sap", "oracle", "microsoft", "boomi", "mulesoft", "workato", "partnerlinq"]):
+        if any(x in src for x in ["sap", "oracle", "microsoft", "boomi", "mulesoft", "workato", "partnerlinq", "infor", "ifs", "unit4", "epicor", "sage"]):
             s += 3
-        if any(x in src for x in ["infoworld", "register", "gartner", "idc"]):
+        if any(x in src for x in ["infoworld", "register", "gartner", "idc", "cio", "zdnet", "techrepublic", "supplychaindive"]):
             s += 2
         # recency boost
         if it.get("published"):
@@ -97,7 +102,7 @@ def rank(items):
             s += max(0, 2 - hrs/12)  # up to +2 if very fresh
         # title signals
         title = (it.get("title") or "").lower()
-        if any(k in title for k in ["ga", "generally available", "roadmap", "security", "cve", "patch", "partnership", "acquires", "announces"]):
+        if any(k in title for k in ["ga", "generally available", "roadmap", "security", "cve", "patch", "partnership", "acquires", "announces", "update", "release"]):
             s += 1.0
         return s
     return sorted(items, key=score, reverse=True)
@@ -106,26 +111,26 @@ def dedupe(items):
     seen = set()
     out = []
     for it in items:
-        key = it["url"].split("?")[0].lower()
-        if key in seen:
+        key = (it["url"] or "").split("?")[0].lower()
+        if not key or key in seen:
             continue
         seen.add(key)
         out.append(it)
     return out
 
 def summarize_batch(items):
-    # If no OpenAI key, return trimmed title as "summary" for smoke tests.
+    # If no OpenAI key, use fallback summaries (safe for $0 runs)
     for it in items:
         it["summary"] = ""
         it["why"] = ""
 
     if not OPENAI_API_KEY:
         for it in items:
-            it["summary"] = it["summary_raw"][:140] or it["title"]
+            text = it["summary_raw"] or it["title"]
+            it["summary"] = text[:300]
             it["why"] = ""
         return items
 
-    # Use OpenAI Chat Completions via raw HTTP to avoid SDK drift
     url = "https://api.openai.com/v1/chat/completions"
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
     for it in items:
@@ -153,7 +158,7 @@ Snippet: {it['summary_raw'][:1200]}"""
             it["why"] = ""
     return items
 
-def render(items, date_dt, out_path, unsubscribe_url):
+def render(items, date_dt, out_path, unsubscribe_url, view_url):
     env = Environment(
         loader=FileSystemLoader(ROOT),
         autoescape=select_autoescape(["html","xml"])
@@ -164,26 +169,28 @@ def render(items, date_dt, out_path, unsubscribe_url):
         it["published_human"] = dt.astimezone(timezone.utc).strftime("%b %d, %H:%M UTC") if dt else "—"
     top = items[:min(len(items), 5)]
     rest = items[5:]
+    preheader = f"{len(items)} new ERP/middleware stories in the last 24h"
     html_out = tmpl.render(
         subject=f"Daily ERP & Middleware Brief — {date_dt.strftime('%b %d, %Y')}",
         date_str=date_dt.strftime("%A, %B %d, %Y"),
         items=items, top=top, rest=rest,
-        unsubscribe_url=unsubscribe_url,
-        sender_name=SENDER_NAME, sender_email=SENDER_EMAIL
+        unsubscribe_url=unsubscribe_url, view_url=view_url,
+        sender_name=SENDER_NAME, sender_email=SENDER_EMAIL,
+        preheader=preheader
     )
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(html_out)
     return html_out
 
-def send_brevo(html, subject):
-    if not BREVO_API_KEY or not RECIPIENTS:
-        print("Skipping send: BREVO_API_KEY or RECIPIENTS missing.")
+def send_brevo_transactional(html, subject):
+    if not BREVO_API_KEY:
+        print("No BREVO_API_KEY; skip send.")
+        return
+    if not RECIPIENTS:
+        print("No RECIPIENTS; skip send.")
         return
     url = "https://api.brevo.com/v3/smtp/email"
-    headers = {
-        "api-key": BREVO_API_KEY,
-        "Content-Type": "application/json"
-    }
+    headers = { "api-key": BREVO_API_KEY, "Content-Type": "application/json" }
     payload = {
         "sender": {"name": SENDER_NAME, "email": SENDER_EMAIL},
         "to": [{"email": e} for e in RECIPIENTS],
@@ -196,41 +203,96 @@ def send_brevo(html, subject):
     }
     r = requests.post(url, headers=headers, json=payload, timeout=60)
     r.raise_for_status()
-    print("Brevo send status:", r.status_code)
+    print("Brevo transactional send:", r.status_code)
+
+def send_brevo_campaign(html, subject):
+    if not BREVO_API_KEY or not BREVO_LIST_ID:
+        print("Missing BREVO_API_KEY or BREVO_LIST_ID; skip campaign send.")
+        return
+    headers = {"api-key": BREVO_API_KEY, "Content-Type": "application/json"}
+    # Create campaign
+    create = requests.post(
+        "https://api.brevo.com/v3/emailCampaigns",
+        headers=headers,
+        json={
+            "name": subject,
+            "subject": subject,
+            "sender": {"name": SENDER_NAME, "email": SENDER_EMAIL},
+            "type": "classic",
+            "htmlContent": html,
+            "recipients": {"listIds": [int(BREVO_LIST_ID)]},
+        },
+        timeout=60
+    )
+    create.raise_for_status()
+    cid = create.json().get("id")
+    print("Created campaign:", cid)
+    # Send now
+    send = requests.post(
+        f"https://api.brevo.com/v3/emailCampaigns/{cid}/sendNow",
+        headers=headers, timeout=60
+    )
+    send.raise_for_status()
+    print("Brevo campaign send:", send.status_code)
 
 def main():
     sources = load_sources()
     all_items = []
 
+    # 1) Fetch RSS
     for url in sources.get("rss_feeds", []):
         try:
             all_items += fetch_rss(url)
         except Exception as e:
             print("RSS error:", url, e)
 
+    # 2) Fetch GDELT (optional)
     for q in sources.get("gdelt_queries", []):
         try:
             all_items += fetch_gdelt(q)
         except Exception as e:
             print("GDELT error:", q, e)
 
-    # filter last 24h and keywords
-    kws = re.compile(r"(SAP|S/4HANA|Oracle|Fusion|middleware|iPaaS|EDI|integration|Dynamics 365|supply chain)", re.I)
-    fresh = [it for it in all_items if within_last_24h(it.get("published")) and kws.search((it.get("title","") + " " + it.get("summary_raw",""))) ]
+    # 3) Filter last 24h (no keyword filter by default as requested)
+    if KEYWORD_FILTER:
+        kws = re.compile(r"(SAP|S/4HANA|Oracle|Fusion|middleware|iPaaS|EDI|integration|Dynamics 365|supply chain)", re.I)
+        fresh = [it for it in all_items if within_last_24h(it.get("published")) and kws.search((it.get("title","") + " " + it.get("summary_raw","")))]
+    else:
+        fresh = [it for it in all_items if within_last_24h(it.get("published"))]
 
     cleaned = dedupe(fresh)
-    ranked = rank(cleaned)[: max(10, min(MAX_ITEMS, 20))]
+    ranked = rank(cleaned)  # ← no cap
+
+    if len(ranked) < MIN_ITEMS_TO_SEND:
+        print(f"Not enough items ({len(ranked)}). Skipping send.")
+        return
 
     summarized = summarize_batch(ranked)
 
+    # 4) Render + archive path
     out_dir = os.path.join(ROOT, "out")
     os.makedirs(out_dir, exist_ok=True)
     today = datetime.now(timezone.utc).date()
-    out_path = os.path.join(out_dir, f"{today.isoformat()}.html")
+    out_filename = f"{today.isoformat()}.html"
+    out_path = os.path.join(out_dir, out_filename)
 
-    html_body = render(summarized, datetime.now(timezone.utc), out_path, unsubscribe_url="https://example.com/unsubscribe")
+    # This view URL assumes GitHub Pages is enabled on / (root) of main branch
+    view_url = os.getenv("VIEW_URL_BASE", "https://example.github.io/") + out_filename
+
+    html_body = render(
+        summarized, datetime.now(timezone.utc),
+        out_path,
+        unsubscribe_url="https://example.com/unsubscribe",
+        view_url=view_url
+    )
     subject = f"Daily ERP & Middleware Brief — {datetime.now(timezone.utc).strftime('%b %d, %Y')}"
-    send_brevo(html_body, subject)
+
+    # 5) Send
+    if SEND_MODE == "campaign":
+        send_brevo_campaign(html_body, subject)
+    else:
+        send_brevo_transactional(html_body, subject)
+
     print("Rendered:", out_path)
 
 if __name__ == "__main__":
