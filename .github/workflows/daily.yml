@@ -4,7 +4,7 @@ on:
     - cron: "15 11 * * *"   # 07:15 America/New_York (11:15 UTC)
   workflow_dispatch:
 
-# ✅ allow this workflow to push commits
+# allow this workflow to push commits (for the archive files in /out)
 permissions:
   contents: write
 
@@ -34,7 +34,12 @@ jobs:
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
           RECIPIENTS: ${{ secrets.RECIPIENTS }}
           TIMEZONE: America/New_York
-          MAX_ITEMS: 15
+          # switch to 'campaign' if you want to send to a Brevo list via Campaigns API
+          SEND_MODE: ${{ vars.SEND_MODE || 'transactional' }}
+          BREVO_LIST_ID: ${{ secrets.BREVO_LIST_ID }}
+          # set this to your GitHub Pages base URL (e.g. https://you.github.io/repo/)
+          VIEW_URL_BASE: ${{ vars.VIEW_URL_BASE || '' }}
+          MIN_ITEMS_TO_SEND: 1
         run: |
           python pipeline.py
 
@@ -43,10 +48,13 @@ jobs:
           set -e
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
-          # Create out/ if missing so git commands don't fail
           mkdir -p out
-          # Only commit & push if anything changed
-          if git status --porcelain | grep -q "^?? out/" || git status --porcelain | grep -q "^ M out/"; then
+          # Make latest issue the index for "View in browser"
+          TODAY=$(date -u +"%Y-%m-%d")
+          if [ -f "out/${TODAY}.html" ]; then
+            cp "out/${TODAY}.html" "out/index.html"
+          fi
+          if git status --porcelain | grep -q "out/"; then
             git add out/*.html || true
             git commit -m "Auto: publish daily issue"
             git push
