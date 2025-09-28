@@ -1,0 +1,16 @@
+# Add or remove feeds anytime. You can also add 'gdelt_queries' below.
+rss_feeds:
+  - https://news.sap.com/feed/
+  - https://blogs.sap.com/feed/
+  - https://www.oracle.com/news/rss/
+  - https://cloudblogs.microsoft.com/dynamics365/feed/
+  - https://boomi.com/feed/
+  - https://www.mulesoft.com/blog/all/feed/
+  - https://www.workato.com/the-connector/feed/
+  - https://www.theregister.com/software/enterprise/headlines.atom
+  - https://www.infoworld.com/index.rss
+  - https://partnerlinq.com/feed/
+
+# Optional queries against GDELT 2.0 DOC (free). Keep short & focused.
+gdelt_queries:
+  - SAP OR "S/4HANA" OR Oracle OR "Dynamics 365" OR middleware OR iPaaS OR EDI
